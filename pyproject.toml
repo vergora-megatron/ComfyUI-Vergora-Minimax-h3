@@ -1,0 +1,12 @@
+[project]
+name = "comfyui-vergora-minimax-h3"
+version = "0.1.0"
+description = "ComfyUI node for minimax-h3 video generation through the Vergora API"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["requests"]
+
+[tool.comfy]
+PublisherId = "vergora"
+DisplayName = "ComfyUI Vergora Minimax H3 Video"
+Icon = ""
