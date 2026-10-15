@@ -278,7 +278,7 @@ def encode_frame(frame, max_bytes):
             return buffer.getvalue(), "jpeg"
 
     raise RuntimeError("图片压缩后仍然超过网关请求体上限 / image still exceeds the gateway body limit "
-                       "after compression；改用图片链接（reference_image_urls）会更稳")
+                       "after compression；请换一张更小的图，或请平台把 client_max_body_size 调大")
 
 
 def make_data_uri(payload, kind):
@@ -396,9 +396,8 @@ def build_payload(prompt, model, duration, seed, resolution, ratio, audio, promp
                      reference_videos, reference_audios, file_url, link_url, duration)
     if not (reference_images or first_frame or last_frame):
         raise RuntimeError(
-            "minimax-h3 必须提供参考图：请把图片接到 reference_images，或把图片链接填进 "
-            "reference_image_urls。/ minimax-h3 needs a reference image: connect one to "
-            "reference_images or fill reference_image_urls."
+            "minimax-h3 必须提供参考图：请把图片接到 reference_images（用 LoadImage 或出图节点）。"
+            "/ minimax-h3 needs a reference image: connect one to reference_images."
         )
 
     payload = {
@@ -515,8 +514,8 @@ def explain_http_error(status, text, model=None):
                 "就把 ratio 从 adaptive 改成其中之一）。" % snippet)
     if status == 413:
         return ("请求体太大被网关拒绝 (HTTP 413) / request body too large: 内嵌图片的 base64 超过了网关的"
-                "请求体上限（nginx 默认 1 MB）。节点会自动压缩图片；如果仍然报这个错，请改用图片链接"
-                "（reference_image_urls），或请平台把 client_max_body_size 调大。")
+                "请求体上限（nginx 默认 1 MB）。节点会自动压缩图片；如果仍然报这个错，请换一张更小的图，"
+                "或请平台把 client_max_body_size 调大。")
     if status in (401, 403):
         return ("鉴权失败 / authentication failed (HTTP %s): 检查 config.ini 里的 KEY。"
                 "Upstream said: %s" % (status, snippet))
@@ -565,9 +564,8 @@ def explain_task_failure(data, text):
     code, detail = extract_failure_reason(data)
     lower = ("%s %s" % (code, detail)).lower()
     if "ref_image" in lower or "缺少必填参数" in detail:
-        return ("任务失败：上游要求提供参考图（原话：“%s”）。请把图片接到 reference_images，"
-                "或把链接填进 reference_image_urls。/ the upstream requires a reference image."
-                % detail)
+        return ("任务失败：上游要求提供参考图（原话：“%s”）。请把图片接到 reference_images。"
+                "/ the upstream requires a reference image." % detail)
     if "invalid_resolution" in lower or "does not support resolution" in lower:
         return ("任务失败：minimax-h3 不支持该分辨率（原话：“%s”）。本节点只允许 1080p，"
                 "请清空 extra_json 里覆盖 resolution 的字段。/ minimax-h3 rejects this resolution; "
@@ -800,9 +798,9 @@ class VergoraMinimaxH3Video:
                                  "tooltip": "-1 = let the service pick a seed"}),
             },
             "optional": {
-                "reference_images": ("IMAGE", {"tooltip": "必填：参考图，最多 10 张（可接一批）"}),
-                "reference_image_urls": ("STRING", {"multiline": True, "default": "",
-                                                    "tooltip": "参考图链接，一行一个（与上面的 IMAGE 输入可叠加）"}),
+                "reference_images": ("IMAGE", {"tooltip": "必填：参考图，最多 10 张（可接一批）。"
+                                                          "这里只接 IMAGE，不走链接——链接由上游去"
+                                                          "抓取，容易因失效而失败"}),
                 "reference_video_urls": ("STRING", {"multiline": True, "default": "",
                                                     "tooltip": "参考视频链接（mp4/mov），一行一个，最多 5 个"}),
                 "reference_audio_urls": ("STRING", {"multiline": True, "default": "",
@@ -813,16 +811,15 @@ class VergoraMinimaxH3Video:
         }
 
     @classmethod
-    def VALIDATE_INPUTS(cls, reference_images=None, reference_image_urls=None):
+    def VALIDATE_INPUTS(cls, reference_images=None):
         """Report the one rule that matters here as *input validation*.
 
         ComfyUI renders validation text in the node's own error panel, while a runtime
         exception would only surface the generic "node failed" toast.
 
-        The signature deliberately lists just the two image inputs and no **kwargs:
-        ComfyUI repeats a returned message once for every input it passes to this
-        function, so receiving all of them would print the same sentence once per
-        widget.
+        The signature deliberately takes exactly one input and no **kwargs: ComfyUI
+        repeats a returned message once for every input it passes to this function, so
+        a wider signature would print the same sentence several times.
         """
 
         def present(value):
@@ -831,21 +828,21 @@ class VergoraMinimaxH3Video:
             return bool(value)
 
         try:
-            if not (present(reference_images) or present(reference_image_urls)):
-                return ("minimax-h3 必须提供参考图：请把图片接到 reference_images，或把链接填进 "
-                        "reference_image_urls。/ minimax-h3 needs a reference image: connect one to "
-                        "reference_images or fill reference_image_urls.")
+            if not present(reference_images):
+                return ("minimax-h3 必须提供参考图：请把图片接到 reference_images（用 LoadImage "
+                        "或出图节点）。/ minimax-h3 needs a reference image: connect one to "
+                        "reference_images.")
         except Exception:  # never block a run because validation itself misbehaved
             return True
         return True
 
     def run(self, prompt, resolution, ratio, duration, audio, prompt_extend, seed,
-            reference_images=None, reference_image_urls="",
-            reference_video_urls="", reference_audio_urls="", extra_json=""):
+            reference_images=None, reference_video_urls="", reference_audio_urls="",
+            extra_json=""):
         path, task_id, video_url = generate(
             prompt, MODEL_ID, duration, seed, resolution, ratio, audio, prompt_extend,
             None, None, "", "",
-            reference_images, reference_image_urls,
+            reference_images, "",
             reference_video_urls, reference_audio_urls,
             "", "", extra_json,
         )

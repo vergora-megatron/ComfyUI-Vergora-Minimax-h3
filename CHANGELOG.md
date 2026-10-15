@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.0 - 2026-10-15
+
+Changed
+
+- The reference image is now the single image input. `reference_image_urls` was removed: URL-based
+  reference images make the upstream fetch the link (which fails with `4002 Failed to download file`
+  once it expires) and were never verified for this channel, while a second image input also made
+  ComfyUI print the validation message once per input. Wire a `LoadImage` node or an image generation
+  node into `reference_images` instead.
+- The missing-image message is a single line. `VALIDATE_INPUTS` now declares exactly one parameter and
+  no `**kwargs`, because ComfyUI repeats a returned message once for every input the function
+  receives — the earlier signature produced the same sentence eleven times.
+
 ## 0.1.0 - 2026-10-15
 
 First release, split out of ComfyUI-Vergora-Wan3 because minimax-h3 has its own contract.

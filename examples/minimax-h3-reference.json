@@ -1,5 +1,5 @@
 {
-  "id": "00f625bb-e53b-42b9-b3b0-df6de03cd78b",
+  "id": "dc28ac0a-8adf-4089-8262-e73d8e9190cd",
   "revision": 0,
   "last_node_id": 2,
   "last_link_id": 1,
@@ -127,15 +127,6 @@
           "link": null
         },
         {
-          "localized_name": "reference_image_urls",
-          "name": "reference_image_urls",
-          "type": "STRING",
-          "widget": {
-            "name": "reference_image_urls"
-          },
-          "link": null
-        },
-        {
           "localized_name": "reference_video_urls",
           "name": "reference_video_urls",
           "type": "STRING",
@@ -197,7 +188,6 @@
         "fixed",
         "",
         "",
-        "",
         ""
       ],
       "widgets_values_named": {
@@ -209,7 +199,6 @@
         "prompt_extend": true,
         "seed": -1,
         "__control__": "fixed",
-        "reference_image_urls": "",
         "reference_video_urls": "",
         "reference_audio_urls": "",
         "extra_json": ""

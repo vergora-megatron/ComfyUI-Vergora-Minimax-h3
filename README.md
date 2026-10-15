@@ -22,10 +22,12 @@ widgets, so you cannot accidentally pick a value the upstream will reject.
 | `duration` | 2 to 30 seconds, or `-1` | `-1` asks the service to pick the length |
 | `audio`, `prompt_extend`, `seed` | as in the W3.0 pack | `seed = -1` means "let the service choose" |
 
-Images may be supplied by connecting an `IMAGE` (a batch of up to 10 is fine) or by listing URLs in
-`reference_image_urls`, one per line; the two are combined. `reference_video_urls` and
-`reference_audio_urls` exist because the channel's request body has `videos` / `audios` fields, but
-they have not been exercised yet.
+The reference image is connected as an `IMAGE`; a batch of up to 10 is fine. It is deliberately the
+only image input: sending a URL instead would make the upstream fetch that URL, which fails whenever
+the link stops resolving (`4002 Failed to download file`), and a second image input would also make
+ComfyUI print the validation message once per input. Use a `LoadImage` node or the output of an
+image generation node. `reference_video_urls` and `reference_audio_urls` exist because the channel's
+request body has `videos` / `audios` fields, but they have not been exercised yet.
 
 ## Requirements
 
@@ -67,8 +69,7 @@ Category: `vergora`
 | `audio` | BOOLEAN | true | Whether the clip carries an audio track |
 | `prompt_extend` | BOOLEAN | true | Let upstream rewrite the prompt |
 | `seed` | INT | -1 | `-1` means "do not send a seed" |
-| `reference_images` | IMAGE (optional) | - | The reference image(s); a batch of up to 10 works |
-| `reference_image_urls` | STRING (multiline, optional) | empty | Extra reference images, one URL per line |
+| `reference_images` | IMAGE (optional) | - | Required in practice: the reference image(s); a batch of up to 10 works |
 | `reference_video_urls` | STRING (multiline, optional) | empty | Reference videos, one URL per line (untested) |
 | `reference_audio_urls` | STRING (multiline, optional) | empty | Reference audio, one URL per line (untested) |
 | `extra_json` | STRING (multiline, optional) | empty | Extra request fields, merged last |
@@ -81,10 +82,6 @@ result panel, and the node registers as an output node.
 **Reference image to video.** Connect an `IMAGE` (a `LoadImage` node, an image-generation node, or a
 batch) to `reference_images`, write what should happen in `prompt`, and press Run. The console prints
 the submit call and one status line per poll, including the upstream's own progress percentage.
-
-**With URLs instead.** Leave `reference_images` empty and put one image URL per line into
-`reference_image_urls`. The upstream fetches those URLs, so they must stay reachable — a temporary CDN
-link that expires will fail the job with `4002 Failed to download file`.
 
 **Ready-made workflow.** Load `examples/minimax-h3-reference.json` (Workflow → Open): it wires a
 `LoadImage` node into `reference_images` and already selects `1080p` / `16:9`. Pick any image of your
@@ -101,7 +98,7 @@ are not billed.
 
 | Symptom | Cause |
 | --- | --- |
-| `minimax-h3 必须提供参考图` (shown as invalid input) | No `IMAGE` and no `reference_image_urls`. Connect an image or add a URL |
+| `minimax-h3 必须提供参考图` (shown as invalid input, exactly one line) | Nothing is connected to `reference_images`. Wire a `LoadImage` node or an image generation node into it |
 | `没有配置 API key` | `KEY` is empty in `config.ini` and `VERGORA_API_KEY` is not set |
 | `503 No available channel for model minimax-h3` | This key has no channel for the model; ask the platform to enable it |
 | `402 Insufficient balance` | The request costs more credits than the account holds; the message states both amounts |
@@ -139,7 +136,9 @@ Wan 3.0 不是同一套契约，所以单独成包（Wan 3.0 见 ComfyUI-Vergora
 也可以用环境变量 `VERGORA_API_KEY`；`config.ini` 已被 gitignore，不会提交密钥。
 
 **用法**：把图片接到 `reference_images`（支持一批，最多 10 张），填好 `prompt`，点运行；
-也可以用 `reference_image_urls` 一行一个填图片链接（注意链接必须长期有效，否则上游下载失败）。
+参考图**只能用 IMAGE 接进来**（`LoadImage` 或出图节点都可以，一批最多 10 张）。这里刻意不提供
+"填图片链接"的输入：一是链接要由上游自己去抓，链接一失效就会以 `4002 Failed to download file`
+失败；二是多一个图片输入会让 ComfyUI 把校验提示重复打印多次。想用现成图片文件，就用 `LoadImage`。
 开箱即用的工作流在 `examples/minimax-h3-reference.json`，加载后换一张自己的图即可。
 
 **计费**：按**请求**计费（不是按秒），改分辨率或时长都不影响价格；撰写本包时目录价 1.365 美元/次
