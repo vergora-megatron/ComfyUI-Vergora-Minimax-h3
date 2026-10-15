@@ -5,6 +5,7 @@ plus the input rules. No network, no API key, no cost.
 Run with any Python that has numpy:  python test_offline.py
 """
 
+import inspect
 import base64
 import os
 import sys
@@ -124,10 +125,14 @@ def main():
     # ---- the one rule that matters, checked before submitting ----
     expect_error(node, "必须提供参考图", prompt="x", resolution="1080p", ratio="16:9",
                  duration=5, audio=True, prompt_extend=True, seed=-1)
-    assert "必须提供参考图" in node.VALIDATE_INPUTS(prompt="x", resolution="1080p",
-                                                    ratio="16:9")
-    assert node.VALIDATE_INPUTS(prompt="x", reference_image_urls="https://x/y.png") is True
-    assert node.VALIDATE_INPUTS(prompt="x", reference_images=["tensor"]) is True
+    assert "必须提供参考图" in node.VALIDATE_INPUTS()
+    assert node.VALIDATE_INPUTS(reference_image_urls="https://x/y.png") is True
+    assert node.VALIDATE_INPUTS(reference_images=["tensor"]) is True
+    # the signature must stay narrow: ComfyUI repeats a message once per input it passes
+    params = inspect.signature(nodes.VergoraMinimaxH3Video.VALIDATE_INPUTS).parameters
+    assert list(params) == ["reference_images", "reference_image_urls"], list(params)
+    assert not any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()), \
+        "**kwargs would duplicate the message for every widget"
 
     # ---- values only extra_json could push out of range are re-checked ----
     expect_error(node, "只支持", prompt="x", resolution="1080p", ratio="adaptive",

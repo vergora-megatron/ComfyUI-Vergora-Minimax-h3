@@ -813,22 +813,25 @@ class VergoraMinimaxH3Video:
         }
 
     @classmethod
-    def VALIDATE_INPUTS(cls, **kwargs):
+    def VALIDATE_INPUTS(cls, reference_images=None, reference_image_urls=None):
         """Report the one rule that matters here as *input validation*.
 
-        ComfyUI shows validation text in the node's own error panel; a runtime
-        exception would only surface the generic "node failed" toast with the real
-        message hidden in the details pane and the console.
+        ComfyUI renders validation text in the node's own error panel, while a runtime
+        exception would only surface the generic "node failed" toast.
+
+        The signature deliberately lists just the two image inputs and no **kwargs:
+        ComfyUI repeats a returned message once for every input it passes to this
+        function, so receiving all of them would print the same sentence once per
+        widget.
         """
 
-        def present(key):
-            value = kwargs.get(key)
+        def present(value):
             if isinstance(value, str):
                 return bool(value.strip())
             return bool(value)
 
         try:
-            if not any(present(key) for key in ("reference_images", "reference_image_urls")):
+            if not (present(reference_images) or present(reference_image_urls)):
                 return ("minimax-h3 必须提供参考图：请把图片接到 reference_images，或把链接填进 "
                         "reference_image_urls。/ minimax-h3 needs a reference image: connect one to "
                         "reference_images or fill reference_image_urls.")
