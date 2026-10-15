@@ -811,29 +811,29 @@ class VergoraMinimaxH3Video:
         }
 
     @classmethod
-    def VALIDATE_INPUTS(cls, reference_images=None):
+    def VALIDATE_INPUTS(cls, input_types=None):
         """Report the one rule that matters here as *input validation*.
 
         ComfyUI renders validation text in the node's own error panel, while a runtime
         exception would only surface the generic "node failed" toast.
 
-        The signature deliberately takes exactly one input and no **kwargs: ComfyUI
-        repeats a returned message once for every input it passes to this function, so
-        a wider signature would print the same sentence several times.
+        Whether the image is connected has to be read from `input_types`, not from the
+        value: during validation a linked input arrives as None, because ComfyUI
+        resolves links only at execution time. `input_types` carries an entry for every
+        input that is actually wired, which is exactly the question here.
+
+        The signature takes only that one pseudo-argument, since ComfyUI prints a
+        returned message once for every input it passes to this function.
         """
-
-        def present(value):
-            if isinstance(value, str):
-                return bool(value.strip())
-            return bool(value)
-
-        try:
-            if not present(reference_images):
-                return ("minimax-h3 必须提供参考图：请把图片接到 reference_images（用 LoadImage "
-                        "或出图节点）。/ minimax-h3 needs a reference image: connect one to "
-                        "reference_images.")
-        except Exception:  # never block a run because validation itself misbehaved
-            return True
+        types = input_types
+        if isinstance(types, (list, tuple)):
+            types = types[0] if types else {}
+        if not isinstance(types, dict):
+            types = {}
+        if not types.get("reference_images"):
+            return ("minimax-h3 必须提供参考图：请把图片接到 reference_images（用 LoadImage "
+                    "或出图节点）。/ minimax-h3 needs a reference image: connect one to "
+                    "reference_images.")
         return True
 
     def run(self, prompt, resolution, ratio, duration, audio, prompt_extend, seed,

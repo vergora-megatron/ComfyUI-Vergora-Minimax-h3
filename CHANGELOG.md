@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.1 - 2026-10-15
+
+Fixed
+
+- The missing-image check no longer fires when an image *is* connected. ComfyUI resolves links only
+  at execution time, so during validation a wired input arrives as `None` — reading its value made a
+  connected image look absent. The check now asks `input_types`, which lists exactly the inputs that
+  are wired. Both directions are covered by the offline test.
+
 ## 0.2.0 - 2026-10-15
 
 Changed

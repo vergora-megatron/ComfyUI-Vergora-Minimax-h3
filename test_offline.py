@@ -125,10 +125,14 @@ def main():
     expect_error(node, "必须提供参考图", prompt="x", resolution="1080p", ratio="16:9",
                  duration=5, audio=True, prompt_extend=True, seed=-1)
     assert "必须提供参考图" in node.VALIDATE_INPUTS()
-    assert node.VALIDATE_INPUTS(reference_images=["tensor"]) is True
+    assert "必须提供参考图" in node.VALIDATE_INPUTS(input_types={})
+    # a wired input shows up in input_types even though its value is not resolvable yet
+    assert node.VALIDATE_INPUTS(input_types={"reference_images": "IMAGE"}) is True
+    assert node.VALIDATE_INPUTS(input_types=[{"reference_images": "IMAGE"}]) is True
+    assert "必须提供参考图" in node.VALIDATE_INPUTS(input_types={"prompt": "STRING"})
     # the signature must stay narrow: ComfyUI repeats a message once per input it passes
     params = inspect.signature(nodes.VergoraMinimaxH3Video.VALIDATE_INPUTS).parameters
-    assert list(params) == ["reference_images"], list(params)
+    assert list(params) == ["input_types"], list(params)
     assert not any(p.kind is inspect.Parameter.VAR_KEYWORD for p in params.values()), \
         "**kwargs would duplicate the message for every widget"
     # the URL field is gone on purpose: one image input keeps the message to a single line
