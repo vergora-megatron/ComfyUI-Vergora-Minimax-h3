@@ -190,6 +190,10 @@ def main():
     else:
         raise AssertionError("an insufficient balance should raise")
 
+    # a 404 means the request never reached the expected route (proxy / wrong base url)
+    hint = nodes.explain_http_error(404, '{"detail":"Not Found"}')
+    assert "404" in hint and "代理" in hint, hint
+
     print("OK 全部通过 / all checks passed")
     print("  payload keys :", sorted(payload.keys()))
     print("  node id      :", list(nodes.NODE_CLASS_MAPPINGS))

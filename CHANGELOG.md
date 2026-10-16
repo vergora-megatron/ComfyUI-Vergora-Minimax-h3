@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.2 - 2026-10-16
+
+Fixed
+
+- A `404 {"detail":"Not Found"}` now says what it means: the request never reached the gateway's
+  route, typically because a local proxy (`HTTP_PROXY` / `HTTPS_PROXY`, a system proxy or a VPN) is
+  intercepting it, or because `BASE_URL` is wrong. Suggested fix: `NO_PROXY=api.vergora.ai` or turn
+  the proxy off.
+
 ## 0.2.1 - 2026-10-15
 
 Fixed
