@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.4 - 2026-10-29
+
+Fixed
+
+- Republishes the `720p` support after the registry timed out while storing `0.2.3`.
+
 ## 0.2.3 - 2026-10-29
 
 Changed
