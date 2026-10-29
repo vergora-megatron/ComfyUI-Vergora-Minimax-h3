@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.3 - 2026-10-29
+
+Changed
+
+- `resolution` now offers both `720p` and `1080p`. `1080p` remains the default so existing
+  workflows keep their previous behavior.
+- Resolution validation and failure messages now list both supported values.
+
 ## 0.2.2 - 2026-10-16
 
 Fixed

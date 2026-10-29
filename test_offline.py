@@ -95,7 +95,7 @@ def main():
 
     # ---- the model is fixed by the package, and the image is required ----
     assert "model" not in node.INPUT_TYPES()["required"], "the model widget is gone by design"
-    assert node.INPUT_TYPES()["required"]["resolution"][0] == ["1080p"]
+    assert node.INPUT_TYPES()["required"]["resolution"][0] == ["1080p", "720p"]
     assert node.INPUT_TYPES()["required"]["ratio"][0] == ["16:9", "9:16", "1:1"]
 
     # ---- happy path: reference batch plus a prompt ----
@@ -114,6 +114,12 @@ def main():
     assert os.path.getsize(path) > 8192, path
     assert nodes.VergoraMinimaxH3Video.OUTPUT_NODE is True
     assert out["ui"]["images"][0]["format"] == "video/mp4", out["ui"]
+
+    # 720p is an explicit option, while 1080p stays the default
+    run_case(node, prompt="Image 1 moves", resolution="720p",
+             ratio="16:9", duration=5, audio=False, prompt_extend=True,
+             seed=42, reference_images=batch)
+    assert STATE["payload"]["resolution"] == "720p", STATE["payload"]
 
     # ---- reference image via URL only ----
     run_case(node, prompt="x", resolution="1080p", ratio="9:16", duration=5,
@@ -143,9 +149,9 @@ def main():
     expect_error(node, "只支持", prompt="x", resolution="1080p", ratio="adaptive",
                  duration=5, audio=True, prompt_extend=True, seed=-1,
                  reference_images=batch, extra_json='{"ratio": "4:3"}')
-    expect_error(node, "1080p", prompt="x", resolution="1080p", ratio="16:9",
+    expect_error(node, "720p", prompt="x", resolution="1080p", ratio="16:9",
                  duration=5, audio=True, prompt_extend=True, seed=-1,
-                 reference_images=batch, extra_json='{"resolution": "720p"}')
+                 reference_images=batch, extra_json='{"resolution": "480p"}')
 
     # ---- targeted failure hints for this model ----
     ref_fail = {"task_info": {"status": "failed"},
@@ -154,7 +160,8 @@ def main():
     res_fail = {"task_info": {"status": "failed"},
                 "data": {"fail_reason": '{"code":"invalid_resolution","message":'
                                         '"model minimax-h3-f does not support resolution 720p"}'}}
-    assert "1080p" in nodes.explain_task_failure(res_fail, "")
+    resolution_hint = nodes.explain_task_failure(res_fail, "")
+    assert "720p" in resolution_hint and "1080p" in resolution_hint
 
     # ---- shared robustness: retries, sized downloads, gateway hints ----
     STATE["polls"] = 0

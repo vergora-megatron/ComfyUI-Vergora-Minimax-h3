@@ -6,7 +6,7 @@ Once published, this package can be installed straight from ComfyUI-Manager.
 
 1. Create an account at <https://registry.comfy.org> and create a **publisher**. The publisher id
    (the part after `@` on your profile page) must match `PublisherId` in `pyproject.toml`, which is
-   currently `vergora`. It is globally unique and cannot be changed later.
+   currently `levi-li`. It is globally unique and cannot be changed later.
 2. Create a **Registry Publishing API key** for that publisher (your publisher page → create key).
    The key is shown once; store it somewhere safe.
 

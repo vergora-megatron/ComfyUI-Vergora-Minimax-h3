@@ -7,8 +7,7 @@ in the sibling pack ComfyUI-Vergora-Wan3:
     * a reference image is required - the channel is image-driven and answers
       "缺少必填参数：ref_image_0" for text-only jobs
     * only the ratios 16:9 / 9:16 / 1:1 are accepted; there is no adaptive
-    * 1080p is the only resolution verified to work; 720p is rejected upstream
-      with invalid_resolution
+    * 720p and 1080p are supported; 1080p remains the default
 
 Those limits are baked into the widget options and re-checked before submitting.
 
@@ -70,10 +69,10 @@ DEFAULT_BASE_URL = "https://api.vergora.ai/v1"
 
 # This package is dedicated to minimax-h3, which follows different rules than Wan 3.0:
 # its channel is image-driven (a reference image is required), it accepts only three
-# ratios, and 1080p is the only resolution verified to work (720p is rejected upstream).
+# ratios, and accepts both 720p and 1080p (1080p remains the default).
 # The Wan 3.0 counterpart lives in ComfyUI-Vergora-Wan3.
 MODEL_ID = "minimax-h3"
-RESOLUTIONS = ["1080p"]
+RESOLUTIONS = ["1080p", "720p"]
 RATIOS = ["16:9", "9:16", "1:1"]
 
 MAX_REFERENCE_IMAGES = 10
@@ -444,8 +443,8 @@ def build_payload(prompt, model, duration, seed, resolution, ratio, audio, promp
         )
     if payload.get("resolution") not in RESOLUTIONS:
         raise RuntimeError(
-            "minimax-h3 目前只支持 1080p（720p 会被上游回 invalid_resolution）。 / "
-            "minimax-h3 currently supports 1080p only."
+            "minimax-h3 只支持 %s。 / minimax-h3 only supports the resolutions %s."
+            % ("、".join(RESOLUTIONS), ", ".join(RESOLUTIONS))
         )
     return payload
 
@@ -573,9 +572,9 @@ def explain_task_failure(data, text):
         return ("任务失败：上游要求提供参考图（原话：“%s”）。请把图片接到 reference_images。"
                 "/ the upstream requires a reference image." % detail)
     if "invalid_resolution" in lower or "does not support resolution" in lower:
-        return ("任务失败：minimax-h3 不支持该分辨率（原话：“%s”）。本节点只允许 1080p，"
+        return ("任务失败：minimax-h3 不支持该分辨率（原话：“%s”）。本节点只允许 720p 或 1080p，"
                 "请清空 extra_json 里覆盖 resolution 的字段。/ minimax-h3 rejects this resolution; "
-                "only 1080p is supported." % detail)
+                "only 720p and 1080p are supported." % detail)
     if "failed to download file" in lower:
         return ("任务失败：上游下载不到你提供的素材链接 / the upstream could not fetch your media URL. "
                 "多半是链接已过期或对它不可达——把图片接到 IMAGE 输入上（节点会转成 Base64 发送），"
@@ -792,7 +791,7 @@ class VergoraMinimaxH3Video:
             "required": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "resolution": (RESOLUTIONS, {"default": RESOLUTIONS[0],
-                                             "tooltip": "只实测到 1080p 可用；720p 会被上游拒绝"}),
+                                             "tooltip": "支持 720p 和 1080p；默认 1080p"}),
                 "ratio": (RATIOS, {"default": RATIOS[0],
                                    "tooltip": "minimax-h3 只支持这三种画幅，没有 adaptive"}),
                 "duration": ("INT", {"default": 5, "min": -1, "max": 30, "step": 1,

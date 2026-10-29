@@ -1,6 +1,6 @@
 [project]
 name = "comfyui-vergora-minimax-h3"
-version = "0.2.2"
+version = "0.2.3"
 description = "ComfyUI node for minimax-h3 video generation through the Vergora API"
 requires-python = ">=3.10"
 license = { text = "MIT" }

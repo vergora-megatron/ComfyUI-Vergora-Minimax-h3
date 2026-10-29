@@ -2,8 +2,8 @@
 
 A ComfyUI custom node that generates video with **minimax-h3** through the Vergora API. It is a
 separate package from [ComfyUI-Vergora-Wan3](https://github.com/vergora-megatron/ComfyUI-Vergora-Wan3)
-because the two models do not share a contract: minimax-h3 is image-driven, accepts only three
-ratios, and only one resolution is known to work. Both packs can be installed side by side.
+because the two models do not share a contract: minimax-h3 is image-driven and accepts only three
+ratios. Both packs can be installed side by side.
 
 - **Model:** `minimax-h3`, fixed by the package.
 - **Input:** one or more reference images (an `IMAGE` batch or URLs) plus a prompt.
@@ -17,7 +17,7 @@ widgets, so you cannot accidentally pick a value the upstream will reject.
 | Setting | Accepted | Notes |
 | --- | --- | --- |
 | Reference image | required | Text-only jobs fail with `缺少必填参数：ref_image_0`; the node refuses them locally |
-| `resolution` | `1080p` | `720p` is rejected with `invalid_resolution`, so it is not offered |
+| `resolution` | `720p`, `1080p` | `1080p` is the default |
 | `ratio` | `16:9`, `9:16`, `1:1` | There is no `adaptive` on this channel |
 | `duration` | 2 to 30 seconds, or `-1` | `-1` asks the service to pick the length |
 | `audio`, `prompt_extend`, `seed` | as in the W3.0 pack | `seed = -1` means "let the service choose" |
@@ -63,7 +63,7 @@ Category: `vergora`
 | Input | Type | Default | Notes |
 | --- | --- | --- | --- |
 | `prompt` | STRING (multiline) | empty | What should happen in the clip; address inputs as `Image 1`, `Video 1` |
-| `resolution` | COMBO | `1080p` | The only value the channel accepts today |
+| `resolution` | COMBO | `1080p` | `720p` or `1080p` |
 | `ratio` | COMBO | `16:9` | `16:9`, `9:16` or `1:1` |
 | `duration` | INT | 5 | `-1` for smart duration, otherwise 2 to 30 seconds |
 | `audio` | BOOLEAN | true | Whether the clip carries an audio track |
@@ -102,7 +102,7 @@ are not billed.
 | `没有配置 API key` | `KEY` is empty in `config.ini` and `VERGORA_API_KEY` is not set |
 | `503 No available channel for model minimax-h3` | This key has no channel for the model; ask the platform to enable it |
 | `402 Insufficient balance` | The request costs more credits than the account holds; the message states both amounts |
-| `invalid_resolution` in a task failure | The channel rejected the resolution. Only `1080p` is offered; clear any `resolution` override in `extra_json` |
+| `invalid_resolution` in a task failure | The channel rejected the resolution. Use `720p` or `1080p`; clear any other `resolution` override in `extra_json` |
 | `4002 Failed to download file` | The upstream could not fetch a reference URL. Use an `IMAGE` input (sent as Base64) or a stable public URL |
 | `413 Request Entity Too Large` | Inline images exceeded the gateway body limit. The node budgets and compresses automatically; otherwise ask the platform to raise `client_max_body_size` |
 | `SSLError` / `UNEXPECTED_EOF_WHILE_READING` | A dropped TLS connection, usually a local proxy or VPN. Submits are not retried automatically (a duplicate could be billed twice) — press Run again |
@@ -127,7 +127,7 @@ Wan 3.0 不是同一套契约，所以单独成包（Wan 3.0 见 ComfyUI-Vergora
 **这个模型的硬约束**（2026-10-15 实测，已固化到控件里）
 
 - **必须给参考图**：纯文本会失败（上游报 `缺少必填参数：ref_image_0`），节点会在提交前拦下并提示
-- **分辨率只有 1080p**：`720p` 会被上游拒绝（`invalid_resolution`），所以下拉里不提供
+- **分辨率支持 720p / 1080p**：默认 1080p；已有工作流保持原分辨率
 - **画幅只有 16:9 / 9:16 / 1:1**：这个通道没有 `adaptive`
 - 时长 2–30 秒或 `-1`（智能时长）；`audio`、`prompt_extend`、`seed` 与 Wan3 包一致
 
